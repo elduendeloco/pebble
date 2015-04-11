@@ -1,0 +1,176 @@
+{
+    "appKeys": {
+        "humidity": 1,
+        "icon": 3,
+        "place": 6,
+        "source": 5,
+        "status": 0,
+        "t_set": 7,
+        "temp": 2,
+        "w_set": 8,
+        "wind": 4
+    },
+    "capabilities": [
+        "location",
+        "configurable"
+    ],
+    "companyName": "MakeAwesomeHappen",
+    "longName": "Time & Weather",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/bluetooth off.png",
+                "name": "BLUETOOTH_OFF",
+                "type": "png"
+            },
+            {
+                "file": "images/logo.png",
+                "name": "LOGO",
+                "type": "png"
+            },
+            {
+                "file": "images/wind.png",
+                "name": "WIND",
+                "type": "png"
+            },
+            {
+                "file": "images/humidity.png",
+                "name": "HUMIDITY",
+                "type": "png"
+            },
+            {
+                "file": "images/thunderstorm.png",
+                "name": "THUNDERSTORM",
+                "type": "png"
+            },
+            {
+                "file": "images/snow.png",
+                "name": "SNOW",
+                "type": "png"
+            },
+            {
+                "file": "images/rain.png",
+                "name": "RAIN",
+                "type": "png"
+            },
+            {
+                "file": "images/few_clouds_night.png",
+                "name": "FEW_CLOUDS_NIGHT",
+                "type": "png"
+            },
+            {
+                "file": "images/few_clouds_day.png",
+                "name": "FEW_CLOUDS_DAY",
+                "type": "png"
+            },
+            {
+                "file": "images/clouds.png",
+                "name": "CLOUDS",
+                "type": "png"
+            },
+            {
+                "file": "images/clear_night.png",
+                "name": "CLEAR_NIGHT",
+                "type": "png"
+            },
+            {
+                "file": "images/clear_day.png",
+                "name": "CLEAR_DAY",
+                "type": "png"
+            },
+            {
+                "file": "images/charge0.png",
+                "name": "CHARGE0",
+                "type": "png"
+            },
+            {
+                "file": "images/charge10.png",
+                "name": "CHARGE10",
+                "type": "png"
+            },
+            {
+                "file": "images/charge20.png",
+                "name": "CHARGE20",
+                "type": "png"
+            },
+            {
+                "file": "images/charge30.png",
+                "name": "CHARGE30",
+                "type": "png"
+            },
+            {
+                "file": "images/charge40.png",
+                "name": "CHARGE40",
+                "type": "png"
+            },
+            {
+                "file": "images/charge50.png",
+                "name": "CHARGE50",
+                "type": "png"
+            },
+            {
+                "file": "images/charge60.png",
+                "name": "CHARGE60",
+                "type": "png"
+            },
+            {
+                "file": "images/charge70.png",
+                "name": "CHARGE70",
+                "type": "png"
+            },
+            {
+                "file": "images/charge80.png",
+                "name": "CHARGE80",
+                "type": "png"
+            },
+            {
+                "file": "images/charge90.png",
+                "name": "CHARGE90",
+                "type": "png"
+            },
+            {
+                "file": "images/charge100.png",
+                "name": "CHARGE100",
+                "type": "png"
+            },
+            {
+                "file": "images/bluetooth.png",
+                "name": "BLUETOOTH",
+                "type": "png"
+            },
+            {
+                "file": "fonts/Stark.ttf",
+                "name": "FONT_22",
+                "type": "font"
+            },
+            {
+                "file": "fonts/Stak.ttf",
+                "name": "FONT_43",
+                "type": "font"
+            },
+            {
+                "file": "fonts/Stak.ttf",
+                "name": "FONT_37",
+                "type": "font"
+            },
+            {
+                "file": "fonts/Stak.ttf",
+                "name": "FONT_12",
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "T&W",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "5087562d-16b6-4c01-aa79-49430e89f298",
+    "versionCode": 2,
+    "versionLabel": "2.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
