@@ -21,7 +21,6 @@ static TextLayer *clock_layer;
 static TextLayer *temp_layer;
 static TextLayer *hum_layer;
 static TextLayer *wind_layer;
-static TextLayer *kmh_layer;
 static TextLayer *source_layer;
 static TextLayer *place_layer;
 
@@ -48,7 +47,7 @@ static GFont font_large;
 static char ora[] = "00:00";
 static char timeFormat[5];
 
-static uint16_t percent=-1;
+
 
 static const uint32_t INBOUND_SIZE = 128; // Inbound app message size
 static const uint32_t OUTBOUND_SIZE = 128; // Outbound app message size
@@ -60,10 +59,10 @@ static char humidity_buff[10] = "\0";
 static char temp_buff[10] = "\0";
 static char icon_buff[10] = "\0";
 static char wind_buff[10] = "\0";
-static char source_buff[20];
+static char source_buff[20] = "Loading...";
 
 static time_t time_stamp = 0;
-static const time_t INTERVAL = 1*60;
+static const time_t INTERVAL = 15*60;
 
 /**
  * Aggiorna i valori del meteo nei layer.
@@ -71,16 +70,18 @@ static const time_t INTERVAL = 1*60;
 
 static void update_values()
 {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "Can't find icon: %s", icon_buff);
-    if(icon)
+    if(icon != NULL)
+	{
         gbitmap_destroy(icon);
+	}
 	// Set appropriate icon based on icon code
 	if(strcmp(icon_buff, "01d") == 0)
         icon = gbitmap_create_with_resource(RESOURCE_ID_CLEAR_DAY);
-    
     else if(strcmp(icon_buff, "01n") == 0)
+	{
         icon = gbitmap_create_with_resource(RESOURCE_ID_CLEAR_NIGHT);
-    
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "L'icona è stata impostata");
+	}
 	else if(strcmp(icon_buff, "02d") == 0)
         icon = gbitmap_create_with_resource(RESOURCE_ID_FEW_CLOUDS_DAY);
 	
@@ -105,26 +106,24 @@ static void update_values()
     
 	else if(strcmp(icon_buff, "50d") == 0 || strcmp(icon_buff, "50n") == 0)
         icon = gbitmap_create_with_resource(RESOURCE_ID_CLOUDS);
-    
 	else {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "Can't find icon: %s", icon_buff);
-		icon = NULL;
 	}
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "ICON OK");
-	if(icon != NULL)
-        bitmap_layer_set_bitmap(icon_layer, icon);
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "ICON OK");
-    text_layer_set_text(temp_layer, temp_buff);
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "temp OK");
-    text_layer_set_text(wind_layer, wind_buff);
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "wind OK");
-    text_layer_set_text(place_layer, place_buff);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "place OK");
-    text_layer_set_text(hum_layer, humidity_buff);
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "hum OK");
-    text_layer_set_text(source_layer, source_buff);
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "source OK");
+	if(icon != NULL){
+        bitmap_layer_set_bitmap(icon_layer, icon);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "L'icona non è nulla 1");
+	}
+		text_layer_set_text(temp_layer, temp_buff);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "temp ok");
+    	text_layer_set_text(wind_layer, wind_buff);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "wind ok");
+		text_layer_set_text(place_layer, place_buff);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "place ok");
+		text_layer_set_text(hum_layer, humidity_buff);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "humidity ok");
+    	text_layer_set_text(source_layer, source_buff);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "source ok");
 }
 
 
@@ -137,21 +136,24 @@ static void check_weather() {
     Tuplet value = TupletCString(STATUS, "retrieve");
     dict_write_tuplet(iter, &value);
     app_message_outbox_send();
-    APP_LOG(APP_LOG_LEVEL_INFO, "Sent Retrive");
+    APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Sent Retrive");
 }
 
 // Ricevuta di consegna avvenuta.
 void out_send_handler (DictionaryIterator *sent, void *context)
 {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Message sent");
+    APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Message sent successful");
 }
 
 // ricevuta di consegna fallita.
 void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context)
 {
     APP_LOG(APP_LOG_LEVEL_INFO, "ERROR ERRROR ERROR");
-	if (reason==APP_MSG_APP_NOT_RUNNING)
+	if (reason==APP_MSG_APP_NOT_RUNNING){
+		ready= false;
 		APP_LOG(APP_LOG_LEVEL_INFO, "Pebble app not running.");
+	}
+		
 }
 
 
@@ -160,15 +162,15 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 
 void in_receivede_handler(DictionaryIterator *received, void *context)
 {
-    char *status=(char*)dict_find(received, STATUS)->value;
+	APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Messaggio Ricevuto");
+    
+	char *status=(char*)dict_find(received, STATUS)->value;
     
     if(status!=NULL)
     {
-    	APP_LOG(APP_LOG_LEVEL_INFO, "status ok");
     	if(strcmp(status, "ready") == 0)
     	{
-        	
-
+			APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Status: ready");
             //LOAD STORED DATA
             strcpy(temp_buff, (char*)dict_find(received, TEMP)->value);
             strcpy(humidity_buff, (char*)dict_find(received, HUMIDITY)->value);
@@ -176,24 +178,22 @@ void in_receivede_handler(DictionaryIterator *received, void *context)
             strcpy(wind_buff, (char*)dict_find(received, WIND)->value);
             strcpy(place_buff, (char*)dict_find(received, PLACE)->value);
             strcpy(source_buff, "Loading...");
-			ready = true;
-			
-            //update_values();
-			APP_LOG(APP_LOG_LEVEL_INFO, "%s", icon_buff);
+			if(ready==true)
+				update_values();
+			else
+				ready = true;
             time_stamp = time(NULL);
             check_weather();
     	}
         else if(strcmp(status, "configUpdated") == 0)
     	{
+				APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Status: configUpdated");
                 time_stamp = time(NULL);
                 check_weather();
     	}
-
-        
-    	else if(strcmp(status, "reporting") == 0) {
-            
-        	APP_LOG(APP_LOG_LEVEL_INFO, "Recieved status \"reporting\"");
-            
+    	else if(strcmp(status, "reporting") == 0)
+		{    
+			APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Status: reporting");            
         	// Copia i dati ricevuti nel messaggio nei buffer opportuni.
         	strcpy(temp_buff, (char*)dict_find(received, TEMP)->value);
         	strcpy(humidity_buff, (char*)dict_find(received, HUMIDITY)->value);
@@ -205,22 +205,25 @@ void in_receivede_handler(DictionaryIterator *received, void *context)
             update_values();
     	}
         else if(strcmp(status, "failed") == 0) {
+			APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Status: failed");           
         	strcpy(source_buff, "Connection\nFailed");
+			time_stamp = time(NULL);
+			update_values();
         }
     	else {
-        	
+        	APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> Status: undefined"); 
     	}
 	}
 	else
 	{
-        APP_LOG(APP_LOG_LEVEL_INFO, "datas error");
+        APP_LOG(APP_LOG_LEVEL_INFO, "Watch -> STATUS ERROR");
 	}
 }
 
 
 void in_dropped_handler(AppMessageResult reason, void *context)
 {
-    APP_LOG(APP_LOG_LEVEL_INFO, "ERROR ERROR ERROR");
+    APP_LOG(APP_LOG_LEVEL_INFO, "ERROR RECEIVING MESSAGE");
 
 }
 
@@ -228,12 +231,10 @@ void in_dropped_handler(AppMessageResult reason, void *context)
 // Controlla se è tempo di aggiornare le informazioni.
 static bool time_to_refresh() {
     time_t time_passed = time(NULL) - time_stamp;
-    
     if(time_passed >= INTERVAL) {
         APP_LOG(APP_LOG_LEVEL_INFO, "Time to refresh");
         return true;
     }
-    
     else
     {
         return false;
@@ -308,8 +309,8 @@ static void battery_handler(BatteryChargeState charge_state)
         iconch = gbitmap_create_with_resource(RESOURCE_ID_CHARGE10);
     else 
         iconch = gbitmap_create_with_resource(RESOURCE_ID_CHARGE0);
-	
-    bitmap_layer_set_bitmap(iconch_layer, iconch);
+	if (iconch != NULL)
+    	bitmap_layer_set_bitmap(iconch_layer, iconch);
 }
 // carica la window con tutti i layer
 static void window_load(Window *window) {
@@ -339,13 +340,10 @@ static void window_load(Window *window) {
     clock_layer = text_layer_create((GRect) { .origin = { 1, 120 }, .size = { 144, 50} });
     text_layer_set_text_color(clock_layer, GColorWhite);
 	#ifdef PBL_BW
-    	text_layer_set_text_color(clock_layer, GColorBlack);
+    	text_layer_set_text_color(clock_layer, GColorWhite);
+		text_layer_set_background_color(clock_layer, GColorBlack);
 	#else
-		text_layer_set_text_color(clock_layer, GColorWhite );
-	#endif
-	#ifdef PBL_BW
-    	text_layer_set_background_color(clock_layer, GColorBlack);
-	#else
+		text_layer_set_text_color(clock_layer, GColorWhite);
 		text_layer_set_background_color(clock_layer, GColorVividCerulean  );
 	#endif
     text_layer_set_font(clock_layer, font_large);
@@ -356,7 +354,11 @@ static void window_load(Window *window) {
     // ------ Setting temp_layer ------
     temp_layer= text_layer_create((GRect) { .origin = { 47, 33 }, .size = { 92, 39} });
     text_layer_set_background_color(temp_layer, GColorWhite);
-    text_layer_set_text_color(temp_layer, GColorBlack);
+	#ifdef PBL_BW
+		text_layer_set_text_color(temp_layer, GColorBlack);
+	#else
+		text_layer_set_text_color(temp_layer, GColorDukeBlue);
+	#endif
     text_layer_set_font(temp_layer, font_medium);
     text_layer_set_text_alignment(temp_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(temp_layer));
@@ -364,43 +366,54 @@ static void window_load(Window *window) {
     //------- Setting place_layer ------
     place_layer= text_layer_create((GRect) { .origin = {47 , 28 }, .size = {92 , 15} });
     text_layer_set_background_color(place_layer, GColorWhite);
-    text_layer_set_text_color(place_layer, GColorBlack);
-    text_layer_set_font(place_layer, font_xsmall);
+	#ifdef PBL_BW
+		text_layer_set_text_color(place_layer, GColorBlack);
+	#else
+		text_layer_set_text_color(place_layer, GColorDukeBlue);
+	#endif    
+	text_layer_set_font(place_layer, font_xsmall);
     text_layer_set_text_alignment(place_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(place_layer));
     
     //------ Setting wind_layer ------
     wind_layer= text_layer_create((GRect) { .origin = {26 , 99 }, .size = {113 , 25} });
     text_layer_set_background_color(wind_layer, GColorWhite);
-    text_layer_set_text_color(wind_layer, GColorBlack);
-    text_layer_set_font(wind_layer, font_small);
+	#ifdef PBL_BW
+		text_layer_set_text_color(wind_layer, GColorBlack);
+	#else
+		text_layer_set_text_color(wind_layer, GColorDukeBlue);
+	#endif
+	text_layer_set_font(wind_layer, font_small);
     text_layer_set_text_alignment(wind_layer, GTextAlignmentRight);
     layer_add_child(window_layer, text_layer_get_layer(wind_layer));
     
     //------ Setting hum_layer ------
     hum_layer= text_layer_create((GRect) { .origin = {26 , 73 }, .size = { 113, 25} });
     text_layer_set_background_color(hum_layer, GColorWhite);
-    text_layer_set_text_color(hum_layer, GColorBlack);
-    text_layer_set_font(hum_layer, font_small);
+	#ifdef PBL_BW
+		text_layer_set_text_color(hum_layer, GColorBlack);
+	#else
+		text_layer_set_text_color(hum_layer, GColorDukeBlue);
+	#endif
+	text_layer_set_font(hum_layer, font_small);
     text_layer_set_text_alignment(hum_layer, GTextAlignmentRight);
     layer_add_child(window_layer, text_layer_get_layer(hum_layer));
     
     // ------ Setting up iconbt_layer ------
     iconbt_layer=bitmap_layer_create((GRect) { .origin = { 0, 5 }, .size = { 20, 20} });
     layer_set_bounds(bitmap_layer_get_layer(iconbt_layer), GRect(0, 0, 20, 20));
-	if(iconbt)
+	if(iconbt != NULL)
         gbitmap_destroy(iconbt);
     iconbt=gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH);
     bitmap_layer_set_bitmap(iconbt_layer, iconbt);
 
 	#ifdef PBL_BW
     	bitmap_layer_set_background_color(iconbt_layer, GColorBlack);
+	    layer_set_hidden( bitmap_layer_get_layer(iconbt_layer), true);
 	#else
 		bitmap_layer_set_background_color(iconbt_layer, GColorVividCerulean);
 		bitmap_layer_set_compositing_mode(iconbt_layer, GCompOpSet);
 	#endif
-		
-    layer_set_hidden( bitmap_layer_get_layer(iconbt_layer), true);
     layer_add_child(window_layer, bitmap_layer_get_layer(iconbt_layer));
     bluetooth_handler(bluetooth_connection_service_peek());
     
@@ -422,14 +435,19 @@ static void window_load(Window *window) {
     // ------ Setting up icon_layer ------
     icon_layer=bitmap_layer_create((GRect) { .origin = { 5, 28 }, .size = { 41, 44} });
     layer_set_bounds(bitmap_layer_get_layer(icon_layer), GRect(0, 0, 41, 44));
-    bitmap_layer_set_background_color(icon_layer, GColorWhite);
+	#ifdef PBL_BW
+    	bitmap_layer_set_background_color(icon_layer, GColorWhite);
+	#else
+		bitmap_layer_set_background_color(icon_layer, GColorWhite   );
+		bitmap_layer_set_compositing_mode(icon_layer, GCompOpSet);
+	#endif
     layer_add_child(window_layer, bitmap_layer_get_layer(icon_layer));
     
     // ------ Setting up iconh_layer ------
     iconh_layer=bitmap_layer_create((GRect) { .origin = { 5, 73 }, .size = { 25, 25} });
     layer_set_bounds(bitmap_layer_get_layer(iconh_layer), GRect(0, 0, 25, 25));
-	if(iconh)
-        gbitmap_destroy(iconh);
+	if(iconh != NULL)
+     	gbitmap_destroy(iconh);
     iconh=gbitmap_create_with_resource(RESOURCE_ID_HUMIDITY);
     bitmap_layer_set_bitmap(iconh_layer, iconh);
     bitmap_layer_set_background_color(iconh_layer, GColorWhite);
@@ -438,7 +456,7 @@ static void window_load(Window *window) {
     // ------ Setting up iconw_layer ------
     iconw_layer=bitmap_layer_create((GRect) { .origin = { 5, 99 }, .size = { 25, 25} });
     layer_set_bounds(bitmap_layer_get_layer(iconw_layer), GRect(0, 0, 25, 25));
-	if(iconw)
+	if(iconw != NULL)
         gbitmap_destroy(iconw);
     iconw=gbitmap_create_with_resource(RESOURCE_ID_WIND);
     bitmap_layer_set_bitmap(iconw_layer, iconw);
@@ -450,36 +468,31 @@ static void window_load(Window *window) {
 	{
 		update_values();
 	}
+	else
+		ready=true;
 }
 
 // richiamata alla chiusura deinit(), dealloca la memoria occupata dau layers
 static void window_unload(Window *window) {
-	
     text_layer_destroy(temp_layer);
     text_layer_destroy(clock_layer);
     text_layer_destroy(wind_layer);
     text_layer_destroy(hum_layer);
-    text_layer_destroy(kmh_layer);
-    
-	if (iconbt)
-		gbitmap_destroy(iconbt);
-	if (icon)
-		gbitmap_destroy(icon);
-	if (iconh)
-		gbitmap_destroy(iconh);
-	if (iconw)
-		gbitmap_destroy(iconw);
-   
-    bitmap_layer_destroy(iconbt_layer);
-    bitmap_layer_destroy(icon_layer);
+	
+	bitmap_layer_destroy(iconbt_layer);
+   	bitmap_layer_destroy(icon_layer);
     bitmap_layer_destroy(iconh_layer);
     bitmap_layer_destroy(iconw_layer);
 	
-    fonts_unload_custom_font(font_xsmall);
-    fonts_unload_custom_font(font_small);
-    fonts_unload_custom_font(font_medium);
-    fonts_unload_custom_font(font_large);
-    
+	if (iconbt != NULL)
+		gbitmap_destroy(iconbt);
+	if (icon != NULL)
+		gbitmap_destroy(icon);
+	if (iconh != NULL)
+		gbitmap_destroy(iconh);
+	if (iconw != NULL)
+		gbitmap_destroy(iconw);
+      window_destroy(window);
 }
 static void setHourStyle()
 {
@@ -515,37 +528,24 @@ static void init(void) {
     
     setHourStyle();
     tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
-
     bluetooth_connection_service_subscribe(&bluetooth_handler);
     battery_state_service_subscribe(&battery_handler);
-
     //144 × 168 pixel
-
-
-    
 }
 
 static void deinit(void) {
-    
     tick_timer_service_unsubscribe();
-
     app_message_deregister_callbacks();
-
     bluetooth_connection_service_unsubscribe();
-
     battery_state_service_unsubscribe();
-
-    window_destroy(window);
-
 }
 
 int main(void) {
     init();
-    
     APP_LOG(APP_LOG_LEVEL_INFO, "Done initializing, pushed window: %p", window);
-    
     app_event_loop();
     deinit();
 }
+
 
 

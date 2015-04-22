@@ -187,23 +187,12 @@ function makeRequest( url, callback, location)
             }
     	}
     };
-    req.timeout=5000;
+    req.timeout=5*60000;
     req.ontimeout = function()
     {
-    	console.log("lento lento lento");
-    	if(callback==dati_openweather)
-        {
-            console.log("Errore di comunicazione con openweather");
-            Pebble.sendAppMessage({"status" : "failed"});
-        }
-        else
-        {
-          	console.log("Errore di comunicazione con meteo.uniparthenope.it");
-            url= 'http://api.openweathermap.org/data/2.5/weather?lat='+location.coords.latitude+'&lon='+location.coords.longitude+'&units=metric&appid=1233eaeae2f2a527804d80980ab54fa8';
-            makeRequest(url, dati_openweather, location);
-        }
+        console.log("Errore di comunicazione");
+        Pebble.sendAppMessage({"status" : "failed"});
     }
-    
     req.send(null);
     console.log("URL: "+ url);
 }
@@ -211,7 +200,7 @@ function makeRequest( url, callback, location)
 function station_nearest(response, location)
 {
 
-    if(response.places.length)
+    if(response.hasOwnProperty('places') && response.places.length)
     {
         url='http://meteo.uniparthenope.it/openapi/v2/products/wrf3/forecast/' + response.places[0].id;
         makeRequest(url, dati_parthenope, location);
@@ -226,57 +215,86 @@ function station_nearest(response, location)
 
 function dati_parthenope(response, location)
 {
-	console.log("Caricamento terminato...");
-    var humidity = "" + parseInt(response.forecast.data.places.place.rh2['#text']) + " \u0025 " ; // Make sure these are strings
-    var temp = confTemp(response.forecast.data.places.place.t2c['#text']);
-	var icon = findIcon(location, parseFloat(response.forecast.data.places.place.clf['#text']), parseFloat(response.forecast.data.places.place.crh['#text']));
-    var wind = "" + findDirection(parseFloat(response.forecast.data.places.place.wd10['#text'])) + " " + setSpeed(response.forecast.data.places.place.ws10['#text']);
-    var place = "" + response.forecast.data.places.place['@label'];
-    
+	if(	response.hasOwnProperty('forecast') && 
+	   	response.forecast.hasOwnProperty('data') &&
+		response.forecast.data.hasOwnProperty('places') &&
+		response.forecast.data.places.hasOwnProperty('place'))
+	{
+		console.log("Caricamento terminato...");
+  		var humidity = "" + parseInt(response.forecast.data.places.place.rh2['#text']) + " \u0025 " ; // Make sure these are strings
+    	var temp = confTemp(response.forecast.data.places.place.t2c['#text']);
+		var icon = findIcon(location, parseFloat(response.forecast.data.places.place.clf['#text']), parseFloat(response.forecast.data.places.place.crh['#text']));
+    	var wind = "" + findDirection(parseFloat(response.forecast.data.places.place.wd10['#text'])) + " " + setSpeed(response.forecast.data.places.place.ws10['#text']);
+    	var place = "" + response.forecast.data.places.place['@label'];
+	}
+	else
+	{
+		url= "http://api.openweathermap.org/data/2.5/weather?lat="+location.coords.latitude+"&lon="+location.coords.longitude+"&units=metric&appid=1233eaeae2f2a527804d80980ab54fa8";
+       	makeRequest(url, dati_openweather, location);
+		return;
+	}
     //LOGS -----------------------------------------------------------------------------------------
     console.log("Place="+place);
-    console.log("Clouds="+response.forecast.data.places.place.clf['#text']);
-    console.log("pioggia="+response.forecast.data.places.place.crh['#text']);
-    console.log("Wind="+wind);
-    console.log("Temp="+temp);
-    console.log("Icon="+icon);
+   	console.log("Clouds="+response.forecast.data.places.place.clf['#text']);
+   	console.log("pioggia="+response.forecast.data.places.place.crh['#text']);
+   	console.log("Wind="+wind);
+   	console.log("Temp="+temp);
+	console.log("Icon="+icon);
     console.log("Humidity="+humidity);
-    console.log("Invio informazioni");
+   	console.log("Invio informazioni");
     //STORAGE ---------------------------------------------------------------------------------------
     window.localStorage.setItem("place", place);
     window.localStorage.setItem("humidity", humidity);
     window.localStorage.setItem("temp", temp);
     window.localStorage.setItem("wind", wind);
     window.localStorage.setItem("icon", icon);
-    
     //SEND -----------------------------------------------------------------------------------------
     Pebble.sendAppMessage
     ({
-        "status": "reporting",
-        "humidity": humidity,
-        "temp": temp,
-        "icon": icon,
-        "wind": wind,
-        "source": "Meteo Uniparthenope",
-        "place" : place
-	});
+		"status": "reporting",
+		"humidity": humidity,
+       	"temp": temp,
+       	"icon": icon,
+       	"wind": wind,
+       	"source": "Meteo Uniparthenope",
+   		"place" : place
+	});	
 }
 
 function dati_openweather(response, location)
 {
 	console.log("Caricamento terminato...");
-    var humidity = "" + parseInt(response.main.humidity) + " \u0025 " ; // Make sure these are strings
-    var temp =confTemp(response.main.temp);
-	var icon = "" + response.weather[0].icon;
-    var wind = "" + findDirection(parseFloat(response.wind.deg))+ " " + setSpeed(response.wind.speed * 1.9438);
-    var place = "" + response.name;
-    //LOGS -----------------------------------------------------------------------------------------
-    console.log("Wind="+wind);
-    console.log("Temp="+temp);
-    console.log("Icon="+icon);
-    console.log("Humidity="+humidity);
-    console.log("Place="+place);
-    console.log("Invio informazioni");
+	if(	response.hasOwnProperty('main') &&
+	  	response.main.hasOwnProperty('humidity') &&
+	  	response.main.hasOwnProperty('temp') &&
+	    response.hasOwnProperty('weather') &&
+		response.hasOwnProperty('wind') &&
+	  	response.hasOwnProperty('name'))
+	{
+    	var humidity = "" + parseInt(response.main.humidity) + " \u0025 " ; // Make sure these are strings
+    	var temp =confTemp(response.main.temp);
+		var icon = "" + response.weather[0].icon;
+    	var wind = "" + findDirection(parseFloat(response.wind.deg))+ " " + setSpeed(response.wind.speed * 1.9438);
+    	var place = "" + response.name;
+	}
+    else
+	{	
+		console.log("Errore di comunicazione"+response.hasOwnProperty('main') +
+	  	response.main.hasOwnProperty('humidity') +
+	  	response.main.hasOwnProperty('temp') +
+	  	response.hasOwnProperty('weather') +
+		response.hasOwnProperty('wind') +
+	  	response.hasOwnProperty('name'));
+		Pebble.sendAppMessage({"status" : "failed"});
+		return;
+	}
+	//LOGS -----------------------------------------------------------------------------------------
+    //console.log("Wind="+wind);
+    //console.log("Temp="+temp);
+    //console.log("Icon="+icon);
+    //console.log("Humidity="+humidity);
+    //console.log("Place="+place);
+    //console.log("Invio informazioni");
 	//STORAGE ---------------------------------------------------------------------------------------
     window.localStorage.setItem("place", place);
     window.localStorage.setItem("humidity", humidity);
@@ -290,7 +308,7 @@ function dati_openweather(response, location)
         "temp": temp,
         "icon": icon,
         "wind": wind,
-        "source": "OpenWeather\nMap",
+        "source": "Meteo Uniparthenope",
         "place" : place
 	});
 }
@@ -328,7 +346,6 @@ function receivedHandler(message) {
 
 function readyHandler(e) {
 		console.log("Invio status: ready");
-		    console.log("Icon="+s_Icon+"9");
         Pebble.sendAppMessage({
                               "status"  : "ready",
                               "temp"    : s_Temp,

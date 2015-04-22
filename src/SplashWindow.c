@@ -29,10 +29,10 @@ void splashCreator()
     window_stack_push(splash, false);
     
     const uint32_t timeout_ms = 1000;
-     APP_LOG(APP_LOG_LEVEL_INFO, "Done initializing, pushed window: %p", splash);
+    APP_LOG(APP_LOG_LEVEL_INFO, "Done initializing, pushed window: %p", splash);
     app_timer_register(timeout_ms, timer_callback, NULL);
 }
-void splashLoad()
+void splashLoad(Window *splash)
 {
     splash_layer = window_get_root_layer(splash);
     logo_layer=bitmap_layer_create((GRect) { .origin = { 0, 0 }, .size = { 144, 168} });
@@ -41,7 +41,7 @@ void splashLoad()
     bitmap_layer_set_bitmap(logo_layer, logo);
     layer_add_child(splash_layer, bitmap_layer_get_layer(logo_layer));
 }
-void splashUnload()
+void splashUnload(Window *splash)
 {
     layer_destroy(splash_layer);
     bitmap_layer_destroy(logo_layer);

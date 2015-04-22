@@ -14,7 +14,7 @@
         "location",
         "configurable"
     ],
-    "companyName": "MakeAwesomeHappen",
+    "companyName": "F. Di Carlo - UniParthenope",
     "longName": "Time & Weather",
     "projectType": "native",
     "resources": {
@@ -169,7 +169,7 @@
     ],
     "uuid": "5087562d-16b6-4c01-aa79-49430e89f298",
     "versionCode": 2,
-    "versionLabel": "2.0",
+    "versionLabel": "3.0",
     "watchapp": {
         "watchface": true
     }
